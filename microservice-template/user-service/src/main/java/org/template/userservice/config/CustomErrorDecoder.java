@@ -1,0 +1,32 @@
+package org.template.userservice.config;
+
+import feign.Response;
+import feign.Util;
+import feign.codec.ErrorDecoder;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.io.IOException;
+
+public class CustomErrorDecoder implements ErrorDecoder {
+    @Override
+    public Exception decode(String methodKey, Response response) {
+        String body = "Unknown error";
+
+        try {
+            if (response.body() != null) {
+                body = Util.toString(response.body().asReader(Util.UTF_8));
+            }
+        } catch (IOException e) {
+            // Handle error while reading the response body
+        }
+
+        HttpStatus status = HttpStatus.resolve(response.status());
+        if (status != null) {
+            return new ResponseStatusException(status, body);
+        }
+
+        return new Exception("General Error: " + body);
+    }
+}
+
